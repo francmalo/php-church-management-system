@@ -152,7 +152,6 @@ if ($formSubmitted) {
                                 placeholder="John Doe"
                                 aria-label="John Doe"
                                 aria-describedby="basic-icon-default-fullname2"
-                                required
                               />
                             </div>
                           </div>
@@ -555,7 +554,7 @@ if ($formSubmitted) {
     }
     ?>
 
-                   <form  id="myForm" method="post" action="" onsubmit="return validateForm()">
+                   <form method="post" action="" >
         
                         <div class="row mb-3">
                           <label class="col-sm-2 col-form-label" for="basic-icon-default-fullname">Name</label>
@@ -572,13 +571,10 @@ if ($formSubmitted) {
                                 placeholder="John Doe"
                                 aria-label="John Doe"
                                 aria-describedby="basic-icon-default-fullname2"
-                                required
                               />
                             </div>
-                            <span class="error" id="headNameError"></span>
                           </div>
                         </div>
-
                        
                         <div class="row mb-3">
                           <label class="col-sm-2 col-form-label" for="basic-icon-default-email">Email</label>
@@ -696,49 +692,6 @@ if ($formSubmitted) {
     </div>
 
     <!-- Core JS -->
-    <script>
-        function validateForm() {
-            // Reset error messages
-            document.getElementById("headNameError").innerHTML = "";
-
-            var isValid = true;
-
-            // Validate head of family name
-            var headName = document.getElementById("headName").value;
-            if (headName === "") {
-                document.getElementById("headNameError").innerHTML = "Please enter the head of family name.";
-                isValid = false;
-            }
-
-            // Validate member names
-            var memberNames = document.querySelectorAll("[name='memberName[]']");
-            for (var i = 0; i < memberNames.length; i++) {
-                var memberName = memberNames[i].value;
-                if (memberName === "") {
-                    alert(`Please enter the name for member ${i + 1}.`);
-                    isValid = false;
-                    break;
-                }
-            }
-
-            return isValid;
-        }
-
-        // Function to add member fields dynamically
-        // function addMemberField() {
-        //     var container = document.getElementById("membersContainer");
-        //     var memberNumber = container.childElementCount + 1;
-
-        //     var memberField = document.createElement("div");
-        //     memberField.innerHTML =
-        //         `<label for="memberName${memberNumber}">Member ${memberNumber} Name:</label>` +
-        //         `<input type="text" id="memberName${memberNumber}" name="memberName[]" required><br>`;
-
-        //     container.appendChild(memberField);
-        // }
-    </script>
-
-
     <!-- build:js assets/vendor/js/core.js -->
     <script src="../assets/vendor/libs/jquery/jquery.js"></script>
     <script src="../assets/vendor/libs/popper/popper.js"></script>

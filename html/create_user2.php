@@ -11,45 +11,46 @@ header('location:../index.php');
 include "../db_connect.php";
 
 
-$successMessage = ""; // Variable to store the success message
-$formSubmitted = false;
 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
- 
+  var_dump($_POST); // Display POST data
   // Process head of the family data
-  $headName = $_POST['headName'];
-  $headEmail = $_POST['headEmail'];
-  $headPhone = $_POST['headPhone'];
+  $headName = isset($_POST['headName']) ? $_POST['headName'] : '';
+  $headEmail = isset($_POST['headEmail']) ? $_POST['headEmail'] : '';
+  $headPhone = isset($_POST['headPhone']) ? $_POST['headPhone'] : '';
+  
   // Insert head of the family data into the database (modify this based on your database structure)
-  $query =  "INSERT INTO family (head, email, phone) VALUES ('$headName', '$headEmail', '$headPhone')";
+  $query =  "INSERT INTO family (name, email, phone) VALUES ('$headName', '$headEmail', '$headPhone')";
   mysqli_query($conn, $query);
 
-  $lastId = mysqli_insert_id($conn); // Get last inserted ID
- 
-  // Get members data
- // ... Your previous code ...
+  $lastInsertId = mysqli_insert_id($conn);
 
- foreach ($_POST['memberName'] as $i => $memberName) {
-  $memberEmail = ($_POST['memberEmail'][$i]);
-  $memberPhone = ($_POST['memberPhone'][$i]);
+  // Process family members data
+  if (isset($_POST['memberName']) && isset($_POST['memberEmail']) && isset($_POST['memberPhone'])) {
+      $memberName = $_POST['memberName'];
+      $memberEmail = $_POST['memberEmail'];
+      $memberPhone = $_POST['memberPhone'];
 
-  $query = "INSERT INTO family_members (head_id, member, email, phone)
-            VALUES ('$lastId', '$memberName', '$memberEmail', '$memberPhone')";
-
-  if (mysqli_query($conn, $query)) {
-      $formSubmitted = true;
-  } else {
-      echo "Error inserting member: " . mysqli_error($conn);
+      // Loop through each family member and insert data into the database
+      for ($i = 0; $i < count($memberName); $i++) {
+        $memberName = $memberName[$i];
+        $memberEmail = $memberEmail[$i];
+        $memberPhone = $memberPhone[$i];
+          // Insert family member data into the database (modify this based on your database structure)
+          $query ="INSERT INTO family_members (family_id, name, email, phone) 
+          VALUES ($lastInsertId, '$memberName', '$memberEmail', '$memberPhone')";
+ mysqli_query($connection, $query);     
+      }
   }
+
+
+    // Redirect or perform additional actions after form submission
+    header('Location: success_page.php');
+    exit();
 }
 
-if ($formSubmitted) {
-  // Use the Post/Redirect/Get pattern to avoid form resubmission
-  header("location: {$_SERVER['PHP_SELF']}?success=1");
-  exit();
-}
-}
+
 
 ?>
 
@@ -113,19 +114,14 @@ if ($formSubmitted) {
     <link rel="stylesheet" href="../assets/vendor/libs/apex-charts/apex-charts.css" />
 
     <!-- Page CSS -->
-  
+
     <!-- Helpers -->
     <script src="../assets/vendor/js/helpers.js"></script>
 
     <!--! Template customizer & Theme config files MUST be included after core stylesheets and helpers.js in the <head> section -->
     <!--? Config:  Mandatory theme config file contain global vars & default theme options, Set your preferred theme option in this file.  -->
     <script src="../assets/js/config.js"></script>
-    
-  
-
-
-
-<script>
+    <script>
         function addFamilyMember() {
             // Specify the container where the dynamic input fields will be added
             var familyMembersContainer = document.getElementById('familyMembers');
@@ -148,11 +144,9 @@ if ($formSubmitted) {
                                 type="text"
                                 class="form-control"
                                 id="memberName"
-                                name="memberName[]"
                                 placeholder="John Doe"
                                 aria-label="John Doe"
                                 aria-describedby="basic-icon-default-fullname2"
-                                required
                               />
                             </div>
                           </div>
@@ -165,7 +159,6 @@ if ($formSubmitted) {
                               <span class="input-group-text"><i class="bx bx-envelope"></i></span>
                               <input
                                 type="text"
-                                name="memberEmail[]"
                                 id="memberEmail"
                                 class="form-control"
                                 placeholder="john.doe"
@@ -186,7 +179,6 @@ if ($formSubmitted) {
                               ></span>
                               <input
                                 type="text"
-                                name="memberPhone[]"
                                 id="memberPhone"
                                 class="form-control phone-mask"
                                 placeholder="0770 000 000"
@@ -302,7 +294,7 @@ if ($formSubmitted) {
                   </a>
                 </li>
                 <li class="menu-item">
-                  <a href="view_user.php" class="menu-link">
+                  <a href="form-layouts-horizontal.html" class="menu-link">
                     <div data-i18n="Horizontal Form">View Users</div>
                   </a>
                 </li>
@@ -532,8 +524,6 @@ if ($formSubmitted) {
           <div class="content-wrapper">
             <!-- Content -->
 
-               
-
             <div class="container-xxl flex-grow-1 container-p-y">
               <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Forms/</span> Vertical Layouts</h4>
 
@@ -548,14 +538,9 @@ if ($formSubmitted) {
                       <small class="text-muted float-end">Merged input group</small>
                     </div>
                     <div class="card-body">
-                    <?php
-    // Display the pop-up message using JavaScript
-    if (isset($_GET['success']) && $_GET['success'] == 1) {
-        echo '<script>alert("Form submitted successfully!");</script>';
-    }
-    ?>
 
-                   <form  id="myForm" method="post" action="" onsubmit="return validateForm()">
+
+                   <form method="post" action="">
         
                         <div class="row mb-3">
                           <label class="col-sm-2 col-form-label" for="basic-icon-default-fullname">Name</label>
@@ -567,18 +552,14 @@ if ($formSubmitted) {
                               <input
                                 type="text"
                                 class="form-control"
-                                name="headName"
                                 id="headName"
                                 placeholder="John Doe"
                                 aria-label="John Doe"
                                 aria-describedby="basic-icon-default-fullname2"
-                                required
                               />
                             </div>
-                            <span class="error" id="headNameError"></span>
                           </div>
                         </div>
-
                        
                         <div class="row mb-3">
                           <label class="col-sm-2 col-form-label" for="basic-icon-default-email">Email</label>
@@ -588,7 +569,6 @@ if ($formSubmitted) {
                               <input
                                 type="text"
                                 id="headEmail"
-                                name="headEmail"
                                 class="form-control"
                                 placeholder="john.doe"
                                 aria-label="john.doe"
@@ -609,7 +589,6 @@ if ($formSubmitted) {
                               <input
                                 type="text"
                                 id="headPhone"
-                                name="headPhone"
                                 class="form-control phone-mask"
                                 placeholder="0770 000 000"
                                 aria-label="0770 000 000"
@@ -619,7 +598,7 @@ if ($formSubmitted) {
                           </div>
                         </div>
                          <!-- Family Members Section -->
-                         <div id="familyMembers">
+            <div id="familyMembers">
                 <!-- Dynamic family member sections will be added here -->
             </div>
 
@@ -627,7 +606,9 @@ if ($formSubmitted) {
 
             <br>
             <br>
-           
+                    
+            
+
                         <div class="row justify-content-end">
                           <div class="col-sm-10">
                             <button type="submit" class="btn btn-primary">Submit</button>
@@ -696,49 +677,6 @@ if ($formSubmitted) {
     </div>
 
     <!-- Core JS -->
-    <script>
-        function validateForm() {
-            // Reset error messages
-            document.getElementById("headNameError").innerHTML = "";
-
-            var isValid = true;
-
-            // Validate head of family name
-            var headName = document.getElementById("headName").value;
-            if (headName === "") {
-                document.getElementById("headNameError").innerHTML = "Please enter the head of family name.";
-                isValid = false;
-            }
-
-            // Validate member names
-            var memberNames = document.querySelectorAll("[name='memberName[]']");
-            for (var i = 0; i < memberNames.length; i++) {
-                var memberName = memberNames[i].value;
-                if (memberName === "") {
-                    alert(`Please enter the name for member ${i + 1}.`);
-                    isValid = false;
-                    break;
-                }
-            }
-
-            return isValid;
-        }
-
-        // Function to add member fields dynamically
-        // function addMemberField() {
-        //     var container = document.getElementById("membersContainer");
-        //     var memberNumber = container.childElementCount + 1;
-
-        //     var memberField = document.createElement("div");
-        //     memberField.innerHTML =
-        //         `<label for="memberName${memberNumber}">Member ${memberNumber} Name:</label>` +
-        //         `<input type="text" id="memberName${memberNumber}" name="memberName[]" required><br>`;
-
-        //     container.appendChild(memberField);
-        // }
-    </script>
-
-
     <!-- build:js assets/vendor/js/core.js -->
     <script src="../assets/vendor/libs/jquery/jquery.js"></script>
     <script src="../assets/vendor/libs/popper/popper.js"></script>
@@ -754,10 +692,6 @@ if ($formSubmitted) {
     <script src="../assets/js/main.js"></script>
 
     <!-- Page JS -->
- <!-- Page JS -->
- 
-    <script src="../assets/js/ui-toasts.js"></script> 
-
 
     <!-- Place this tag in your head or just before your close body tag. -->
     <script async defer src="https://buttons.github.io/buttons.js"></script>

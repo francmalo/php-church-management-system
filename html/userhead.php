@@ -12,7 +12,6 @@ include "../db_connect.php";
 
 
 $successMessage = ""; // Variable to store the success message
-$formSubmitted = false;
 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -22,34 +21,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $headEmail = $_POST['headEmail'];
   $headPhone = $_POST['headPhone'];
   // Insert head of the family data into the database (modify this based on your database structure)
-  $query =  "INSERT INTO family (head, email, phone) VALUES ('$headName', '$headEmail', '$headPhone')";
-  mysqli_query($conn, $query);
+  $query =  "INSERT INTO family (name, email, phone) VALUES ('$headName', '$headEmail', '$headPhone')";
+  $result = mysqli_query($conn, $query);
 
-  $lastId = mysqli_insert_id($conn); // Get last inserted ID
- 
-  // Get members data
- // ... Your previous code ...
-
- foreach ($_POST['memberName'] as $i => $memberName) {
-  $memberEmail = ($_POST['memberEmail'][$i]);
-  $memberPhone = ($_POST['memberPhone'][$i]);
-
-  $query = "INSERT INTO family_members (head_id, member, email, phone)
-            VALUES ('$lastId', '$memberName', '$memberEmail', '$memberPhone')";
-
-  if (mysqli_query($conn, $query)) {
-      $formSubmitted = true;
-  } else {
-      echo "Error inserting member: " . mysqli_error($conn);
-  }
-}
-
-if ($formSubmitted) {
-  // Use the Post/Redirect/Get pattern to avoid form resubmission
-  header("location: {$_SERVER['PHP_SELF']}?success=1");
-  exit();
+  if ($result) {
+    $successMessage = "Form submitted successfully!";
+    // Clear form data to avoid resubmission on page refresh
+    $_POST = array();
+    header('Location: view_user.php'); // Replace 'success_page.php' with the actual success page
+        exit(); // Stop further execution
+} else {
+    $errorMessage = "Error submitting form. Please try again.";
 }
 }
+
 
 ?>
 
@@ -121,7 +106,20 @@ if ($formSubmitted) {
     <!--? Config:  Mandatory theme config file contain global vars & default theme options, Set your preferred theme option in this file.  -->
     <script src="../assets/js/config.js"></script>
     
-  
+    <script>
+    // Function to show success message for a few seconds and then hide it
+    function showAndHideSuccessMessage(message) {
+        // Display the success message
+        var successMessageDiv = document.getElementById('success-message');
+        successMessageDiv.innerHTML = message;
+        successMessageDiv.style.display = 'block';
+
+        // Hide the success message after 10 seconds (adjust as needed)
+        setTimeout(function() {
+            successMessageDiv.style.display = 'none';
+        }, 10000);
+    }
+</script>
 
 
 
@@ -148,11 +146,10 @@ if ($formSubmitted) {
                                 type="text"
                                 class="form-control"
                                 id="memberName"
-                                name="memberName[]"
+                                name="memberName"
                                 placeholder="John Doe"
                                 aria-label="John Doe"
                                 aria-describedby="basic-icon-default-fullname2"
-                                required
                               />
                             </div>
                           </div>
@@ -165,7 +162,7 @@ if ($formSubmitted) {
                               <span class="input-group-text"><i class="bx bx-envelope"></i></span>
                               <input
                                 type="text"
-                                name="memberEmail[]"
+                                name="memberEmail"
                                 id="memberEmail"
                                 class="form-control"
                                 placeholder="john.doe"
@@ -186,7 +183,7 @@ if ($formSubmitted) {
                               ></span>
                               <input
                                 type="text"
-                                name="memberPhone[]"
+                                name="memberPhone"
                                 id="memberPhone"
                                 class="form-control phone-mask"
                                 placeholder="0770 000 000"
@@ -532,7 +529,14 @@ if ($formSubmitted) {
           <div class="content-wrapper">
             <!-- Content -->
 
-               
+               <!-- Add this div to display the success message -->
+               <div id="success-message" class="alert alert-success" role="alert" style="display: none;"></div>
+
+    <!-- <php if (!empty($successMessage)): ?>
+        <div class="alert alert-success" role="alert">
+            <php echo $successMessage; ?>
+        </div>
+    <php endif; ?> -->
 
             <div class="container-xxl flex-grow-1 container-p-y">
               <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Forms/</span> Vertical Layouts</h4>
@@ -548,14 +552,9 @@ if ($formSubmitted) {
                       <small class="text-muted float-end">Merged input group</small>
                     </div>
                     <div class="card-body">
-                    <?php
-    // Display the pop-up message using JavaScript
-    if (isset($_GET['success']) && $_GET['success'] == 1) {
-        echo '<script>alert("Form submitted successfully!");</script>';
-    }
-    ?>
 
-                   <form  id="myForm" method="post" action="" onsubmit="return validateForm()">
+
+                   <form method="post" action="" onsubmit="showAndHideSuccessMessage('Form submitted successfully!');">
         
                         <div class="row mb-3">
                           <label class="col-sm-2 col-form-label" for="basic-icon-default-fullname">Name</label>
@@ -572,13 +571,10 @@ if ($formSubmitted) {
                                 placeholder="John Doe"
                                 aria-label="John Doe"
                                 aria-describedby="basic-icon-default-fullname2"
-                                required
                               />
                             </div>
-                            <span class="error" id="headNameError"></span>
                           </div>
                         </div>
-
                        
                         <div class="row mb-3">
                           <label class="col-sm-2 col-form-label" for="basic-icon-default-email">Email</label>
@@ -696,49 +692,6 @@ if ($formSubmitted) {
     </div>
 
     <!-- Core JS -->
-    <script>
-        function validateForm() {
-            // Reset error messages
-            document.getElementById("headNameError").innerHTML = "";
-
-            var isValid = true;
-
-            // Validate head of family name
-            var headName = document.getElementById("headName").value;
-            if (headName === "") {
-                document.getElementById("headNameError").innerHTML = "Please enter the head of family name.";
-                isValid = false;
-            }
-
-            // Validate member names
-            var memberNames = document.querySelectorAll("[name='memberName[]']");
-            for (var i = 0; i < memberNames.length; i++) {
-                var memberName = memberNames[i].value;
-                if (memberName === "") {
-                    alert(`Please enter the name for member ${i + 1}.`);
-                    isValid = false;
-                    break;
-                }
-            }
-
-            return isValid;
-        }
-
-        // Function to add member fields dynamically
-        // function addMemberField() {
-        //     var container = document.getElementById("membersContainer");
-        //     var memberNumber = container.childElementCount + 1;
-
-        //     var memberField = document.createElement("div");
-        //     memberField.innerHTML =
-        //         `<label for="memberName${memberNumber}">Member ${memberNumber} Name:</label>` +
-        //         `<input type="text" id="memberName${memberNumber}" name="memberName[]" required><br>`;
-
-        //     container.appendChild(memberField);
-        // }
-    </script>
-
-
     <!-- build:js assets/vendor/js/core.js -->
     <script src="../assets/vendor/libs/jquery/jquery.js"></script>
     <script src="../assets/vendor/libs/popper/popper.js"></script>
